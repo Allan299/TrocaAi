@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() {
+      return request.auth != null;
+    }
+
+    // Perfil do usuário: todos logados leem, só o dono escreve.
+    match /users/{uid} {
+      allow read: if logado();
+      allow create, update: if logado() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // Validação dos campos de um anúncio (usada na criação e na edição).
+    function anuncioValido(d) {
+      return d.titulo is string && d.titulo.size() >= 3 && d.titulo.size() <= 100
+          && d.descricao is string && d.descricao.size() > 0 && d.descricao.size() <= 1000
+          && d.categoria is string && d.categoria.size() > 0
+          && d.tipo in ['VENDA', 'TROCA', 'DOACAO']
+          && d.conservacao in ['NOVO', 'COMO_NOVO', 'BOM', 'USADO']
+          && (d.get('preco', null) == null || (d.preco is number && d.preco >= 0))
+          && (d.tipo != 'VENDA' || d.get('preco', null) != null)
+          && d.get('disponivel', true) is bool;
+    }
+
+    // Anúncios: todos logados leem; só o vendedor edita e exclui.
+    match /anuncios/{anuncioId} {
+      allow read: if logado();
+
+      allow create: if logado()
+                    && anuncioValido(request.resource.data)
+                    && request.resource.data.vendedorId == request.auth.uid
+                    && request.resource.data.criadoEm == request.time;
+
+      // Só o dono; vendedorId e criadoEm não podem mudar (só estes campos são editáveis).
+      allow update: if logado()
+                    && resource.data.vendedorId == request.auth.uid
+                    && anuncioValido(request.resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+                         ['titulo', 'descricao', 'categoria', 'tipo', 'preco',
+                          'conservacao', 'fotoUrl', 'fotoPath', 'disponivel', 'vendedorNome']);
+
+      allow delete: if logado()
+                    && resource.data.vendedorId == request.auth.uid;
+    }
+
+    // Favoritos: users/{uid}/favoritos/{anuncioId}. Só o próprio usuário lê e escreve
+    // a sua lista; ninguém vê os favoritos de outras pessoas.
+    match /users/{uid}/favoritos/{anuncioId} {
+      allow read, delete: if logado() && request.auth.uid == uid;
+      allow create, update: if logado() && request.auth.uid == uid
+                            && request.resource.data.keys().hasOnly(['criadoEm']);
+    }
+  }
+}

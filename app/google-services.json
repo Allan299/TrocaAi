@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1059724544882",
+    "project_id": "trocaai-b07f7",
+    "storage_bucket": "trocaai-b07f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1059724544882:android:1ed51be3688b37b1f5abeb",
+        "android_client_info": {
+          "package_name": "com.example.trocaai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1059724544882-o70rba20317bfl6flrqbcgdnrlhla884.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2K4dAjN0evvJjhEWf7BtAidLfkIuvdd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1059724544882-o70rba20317bfl6flrqbcgdnrlhla884.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
