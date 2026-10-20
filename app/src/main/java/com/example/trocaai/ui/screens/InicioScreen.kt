@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +26,11 @@ import com.example.trocaai.ui.components.itensAnuncios
 import com.example.trocaai.ui.components.rememberEstadoLista
 
 @Composable
-fun InicioScreen(onAbrirAnuncio: (String) -> Unit, onAbrirAssistente: () -> Unit) {
+fun InicioScreen(
+    onAbrirAnuncio: (String) -> Unit,
+    onAbrirAssistente: () -> Unit,
+    onAbrirPerfil: () -> Unit
+) {
     val repositorio = remember { AnunciosRepository() }
     val estado = rememberEstadoLista(Unit) { repositorio.observarRecentes() }
 
@@ -33,11 +39,24 @@ fun InicioScreen(onAbrirAnuncio: (String) -> Unit, onAbrirAssistente: () -> Unit
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text(
-                "TrocaAí",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "TrocaAí",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                IconButton(onClick = onAbrirPerfil) {
+                    Icon(
+                        imageVector = Icons.Filled.Person,
+                        contentDescription = "Meu Perfil",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             Text(
                 "Compre, venda, troque e doe materiais acadêmicos.",
                 style = MaterialTheme.typography.bodyMedium,

@@ -24,7 +24,8 @@ data class ResultadoLista(val anuncios: List<Anuncio>, val deCache: Boolean)
 class AnunciosRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance(),
+    private val chatRepository: ChatRepository = ChatRepository(auth, db)
 ) {
     private val colecao get() = db.collection(COLECAO_ANUNCIOS)
 
@@ -147,6 +148,7 @@ class AnunciosRepository(
     suspend fun excluir(anuncio: Anuncio) {
         colecao.document(anuncio.id).delete().await()
         if (anuncio.fotoPath.isNotBlank()) apagarFoto(anuncio.fotoPath)
+        chatRepository.excluirConversasDoAnuncio(anuncio.id)
     }
 
     // Falhas ao apagar a foto são ignoradas: o anúncio já foi tratado.

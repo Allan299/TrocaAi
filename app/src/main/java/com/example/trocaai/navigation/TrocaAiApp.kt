@@ -25,25 +25,28 @@ import com.example.trocaai.assistente.ConversaAssistente
 import com.example.trocaai.assistente.InterpretadorPorRegras
 import com.example.trocaai.data.AnunciosRepository
 import com.example.trocaai.data.AuthRepository
-import com.example.trocaai.ui.screens.AssistenteScreen
+import com.example.trocaai.data.ChatRepository
 import com.example.trocaai.data.FavoritosRepository
 import com.example.trocaai.ui.components.BarraNavegacao
 import com.example.trocaai.ui.components.FavoritosState
 import com.example.trocaai.ui.components.LocalFavoritos
-import com.example.trocaai.ui.screens.FavoritosScreen
-import com.example.trocaai.util.mensagemEmPortugues
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.catch
-import com.example.trocaai.ui.screens.AnuncioDetalheScreen
 import com.example.trocaai.ui.screens.AnuncianteScreen
+import com.example.trocaai.ui.screens.AnuncioDetalheScreen
 import com.example.trocaai.ui.screens.AnuncioFormScreen
+import com.example.trocaai.ui.screens.AssistenteScreen
 import com.example.trocaai.ui.screens.BuscarScreen
 import com.example.trocaai.ui.screens.CadastroScreen
+import com.example.trocaai.ui.screens.ChatScreen
+import com.example.trocaai.ui.screens.ConversasListaScreen
+import com.example.trocaai.ui.screens.FavoritosScreen
 import com.example.trocaai.ui.screens.InicioScreen
 import com.example.trocaai.ui.screens.LoginScreen
 import com.example.trocaai.ui.screens.PerfilScreen
+import com.example.trocaai.util.mensagemEmPortugues
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 const val ROTA_LOGIN = "login"
@@ -52,10 +55,13 @@ const val ROTA_DETALHE = "detalhe/{id}"
 const val ROTA_EDITAR = "editar/{id}"
 const val ROTA_ANUNCIANTE = "anunciante/{uid}"
 const val ROTA_ASSISTENTE = "assistente"
+const val ROTA_CHAT = "chat/{conversaId}"
+const val ROTA_PERFIL = "perfil"
 
 private fun rotaDetalhe(id: String) = "detalhe/$id"
 private fun rotaEditar(id: String) = "editar/$id"
 private fun rotaAnunciante(uid: String) = "anunciante/$uid"
+private fun rotaChat(conversaId: String) = "chat/$conversaId"
 
 private val rotasDaBarra = Destino.entries.map { it.rota }
 private val rotasDeAutenticacao = listOf(ROTA_LOGIN, ROTA_CADASTRO)
@@ -166,7 +172,8 @@ fun TrocaAiApp() {
                 composable(Destino.INICIO.rota) {
                     InicioScreen(
                         onAbrirAnuncio = { navController.navigate(rotaDetalhe(it)) },
-                        onAbrirAssistente = { navController.navigate(ROTA_ASSISTENTE) }
+                        onAbrirAssistente = { navController.navigate(ROTA_ASSISTENTE) },
+                        onAbrirPerfil = { navController.navigate(ROTA_PERFIL) }
                     )
                 }
                 composable(Destino.BUSCAR.rota) {
@@ -185,7 +192,13 @@ fun TrocaAiApp() {
                         onAbrirAnuncio = { navController.navigate(rotaDetalhe(it)) }
                     )
                 }
-                composable(Destino.PERFIL.rota) {
+                composable(Destino.MENSAGENS.rota) {
+                    ConversasListaScreen(
+                        uid = usuario?.uid,
+                        onAbrirChat = { navController.navigate(rotaChat(it)) }
+                    )
+                }
+                composable(ROTA_PERFIL) {
                     PerfilScreen(
                         usuario = usuario,
                         onSair = { repositorio.sair() },
@@ -195,13 +208,32 @@ fun TrocaAiApp() {
                 }
                 composable(ROTA_DETALHE) { entrada ->
                     val id = entrada.arguments?.getString("id").orEmpty()
+                    val chatRepository = remember { ChatRepository() }
                     AnuncioDetalheScreen(
                         anuncioId = id,
                         onVoltar = { navController.popBackStack() },
                         onEditar = { navController.navigate(rotaEditar(it)) },
                         onExcluido = { navController.popBackStack() },
                         onAbrirAnunciante = { navController.navigate(rotaAnunciante(it)) },
+                        onIniciarChat = { anuncio ->
+                            escopo.launch {
+                                try {
+                                    val conversaId = chatRepository.obterOuCriarConversa(anuncio)
+                                    navController.navigate(rotaChat(conversaId))
+                                } catch (e: Exception) {
+                                    mostrarMensagem(e.mensagemEmPortugues())
+                                }
+                            }
+                        },
                         mostrarMensagem = mostrarMensagem
+                    )
+                }
+                composable(ROTA_CHAT) { entrada ->
+                    val conversaId = entrada.arguments?.getString("conversaId").orEmpty()
+                    ChatScreen(
+                        conversaId = conversaId,
+                        onVoltar = { navController.popBackStack() },
+                        onAbrirAnuncio = { navController.navigate(rotaDetalhe(it)) }
                     )
                 }
                 composable(ROTA_ASSISTENTE) {
