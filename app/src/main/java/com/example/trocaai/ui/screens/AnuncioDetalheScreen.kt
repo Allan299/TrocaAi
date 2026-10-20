@@ -49,6 +49,7 @@ fun AnuncioDetalheScreen(
     onEditar: (String) -> Unit,
     onExcluido: () -> Unit,
     onAbrirAnunciante: (String) -> Unit,
+    onIniciarChat: (Anuncio) -> Unit,
     mostrarMensagem: (String) -> Unit
 ) {
     val repositorio = remember { AnunciosRepository() }
@@ -174,6 +175,15 @@ fun AnuncioDetalheScreen(
                         )
                         OutlinedButton(onClick = { onAbrirAnunciante(atual.vendedorId) }) {
                             Text("Anunciante: ${atual.vendedorNome.ifBlank { "ver perfil" }}")
+                        }
+
+                        if (!ehDono && atual.disponivel) {
+                            Button(
+                                onClick = { onIniciarChat(atual) },
+                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                            ) {
+                                Text("Conversar com o vendedor")
+                            }
                         }
 
                         if (ehDono) {
